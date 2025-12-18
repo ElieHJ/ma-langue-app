@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot Coach 2.0</title>
+    <title>Polyglot Coach - 1.5 Flash 8B</title>
     <style>
         :root { --primary: #4A90E2; --success: #4caf50; --bg: #f4f7f9; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
         .container { width: 100%; max-width: 450px; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
         .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: var(--primary); background: #eef5ff; padding: 10px 20px; border-radius: 15px; }
-        .bubble { min-height: 180px; background: #f8f9fa; border: 2px solid var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 20px; margin-bottom: 20px; font-size: 1.3rem; line-height: 1.4; }
-        button { width: 100%; padding: 16px; margin: 6px 0; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
-        .btn-ai { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .bubble { min-height: 150px; background: #f8f9fa; border: 2px solid var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 20px; margin-bottom: 20px; font-size: 1.2rem; }
+        button { width: 100%; padding: 16px; margin: 6px 0; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-ai { background: #4A90E2; color: white; }
         .btn-mic { background: var(--success); color: white; }
-        .btn-sec { background: #edf2f7; color: #4a5568; }
-        .config-area { margin-top: 20px; padding: 10px; border-top: 1px solid #eee; font-size: 11px; }
-        input { width: 80%; padding: 8px; border-radius: 5px; border: 1px solid #ddd; }
-        .rtl { direction: rtl; font-size: 1.8rem !important; }
+        .btn-clear { background: #ff4757; color: white; font-size: 10px; padding: 5px; margin-top: 20px; width: auto; }
+        .config-area { margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 15px; }
+        input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -27,69 +26,87 @@
         <span>⭐ Niv. <span id="level">1</span></span>
     </div>
 
-    <select id="langSelect" style="width:100%; padding:10px; border-radius:10px; margin-bottom:15px;">
+    <select id="langSelect" style="width:100%; padding:12px; border-radius:10px; margin-bottom:15px;">
         <option value="English">Anglais 🇺🇸</option>
         <option value="Hebrew">Hébreu 🇮🇱</option>
         <option value="Spanish">Espagnol 🇪🇸</option>
     </select>
 
-    <div class="bubble" id="display">Prêt pour ton défi Gemini 2.0 ?</div>
+    <div class="bubble" id="display">Colle ta clé API en bas pour commencer.</div>
 
-    <button class="btn-ai" onclick="genererDefi()">✨ GÉNÉRER DÉFI IA</button>
+    <button class="btn-ai" onclick="genererDefi()">✨ GÉNÉRER DÉFI (1.5 Flash 8B)</button>
     <button class="btn-mic" onclick="ecouter()">🎤 RÉPONDRE</button>
     
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <button class="btn-sec" onclick="rejouer()">🔊 ÉCOUTER</button>
-        <button class="btn-sec" onclick="voirAide()">👁 AIDE</button>
+    <div class="config-area" id="configZone">
+        <strong>🔧 Configuration</strong>
+        <input type="text" id="keyIn" placeholder="Colle ta clé API Gemini ici">
+        <button style="background:#333; color:white;" onclick="saveKey()">VALIDER LA CLÉ</button>
     </div>
 
-    <div class="config-area">
-        <input type="password" id="keyIn" placeholder="Ta clé API ici">
-        <button style="width:auto; padding:5px 10px;" onclick="saveKey()">OK</button>
-    </div>
+    <button class="btn-clear" onclick="clearAll()">Vider la mémoire (Reset)</button>
+    <div id="debug" style="font-size:10px; color:red; margin-top:10px; word-break:break-all;"></div>
 </div>
 
 <script>
     let API_KEY = localStorage.getItem('gemini_api_key');
     let score = parseInt(localStorage.getItem('polyglotScore')) || 0;
     let currentPhrase = "";
-    let currentTrad = "";
 
     document.getElementById('score').innerText = score;
     document.getElementById('level').innerText = Math.floor(score/100) + 1;
 
     function saveKey() {
         const k = document.getElementById('keyIn').value.trim();
-        if(k) { localStorage.setItem('gemini_api_key', k); location.reload(); }
+        if(k) { 
+            localStorage.setItem('gemini_api_key', k); 
+            alert("Clé sauvegardée !");
+            location.reload(); 
+        }
+    }
+
+    function clearAll() {
+        localStorage.clear();
+        alert("Mémoire vidée. Recommençons à zéro.");
+        location.reload();
     }
 
     async function genererDefi() {
-        if(!API_KEY) return alert("Configure ta clé en bas !");
+        if(!API_KEY) return alert("Mets ta clé en bas !");
         const lang = document.getElementById('langSelect').value;
         const display = document.getElementById('display');
-        display.innerText = "L'IA 2.0 réfléchit...";
+        const debug = document.getElementById('debug');
+        display.innerText = "L'IA prépare un défi...";
+        debug.innerText = "";
 
-        // Utilisation du modèle 2.0 Flash Lite que tu as vu dans ta liste
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-001:generateContent?key=${API_KEY}`;
+        // Modèle 1.5 Flash 8B : Très stable et rapide
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${API_KEY}`;
 
         try {
             const resp = await fetch(url, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    contents: [{parts: [{text: `Génère une phrase courte en ${lang}. Réponds en JSON : {"p": "phrase en ${lang}", "t": "traduction en français"}`}]}]
+                    contents: [{parts: [{text: `Génère une phrase courte en ${lang} (niveau débutant). Réponds UNIQUEMENT en JSON : {"p": "phrase en ${lang}", "t": "traduction en français"}`}]}]
                 })
             });
+
             const data = await resp.json();
+            
+            if (!resp.ok) {
+                debug.innerText = "Erreur Google : " + (data.error ? data.error.message : "Inconnue");
+                display.innerText = "Erreur de clé (voir en bas)";
+                return;
+            }
+
             const text = data.candidates[0].content.parts[0].text;
             const json = JSON.parse(text.match(/\{.*\}/s)[0]);
             
             currentPhrase = json.p;
-            currentTrad = json.t;
-            display.innerText = "Traduisez : " + currentTrad;
-            display.classList.remove('rtl');
+            display.innerText = "Traduisez : " + json.t;
+            document.getElementById('configZone').style.display = 'none'; // Cache la config si ça marche
         } catch(e) {
-            display.innerText = "Erreur de connexion. Vérifie ta clé.";
+            display.innerText = "Erreur technique.";
+            debug.innerText = e.message;
         }
     }
 
@@ -103,28 +120,24 @@
         document.getElementById('display').innerText = "Je t'écoute...";
         rec.onresult = (e) => {
             const dit = e.results[0][0].transcript.toLowerCase();
-            if(dit.includes(currentPhrase.toLowerCase().replace(/[?.]/g, ""))) {
+            const cible = currentPhrase.toLowerCase().replace(/[?.,!]/g, "");
+            if(dit.includes(cible) || cible.includes(dit)) {
                 score += 20;
                 localStorage.setItem('polyglotScore', score);
                 document.getElementById('score').innerText = score;
-                alert("⭐ BRAVO !");
+                alert("⭐ BRAVO ! C'est exactement ça.");
                 genererDefi();
-            } else { alert("Entendu : " + dit); document.getElementById('display').innerText = "Traduisez : " + currentTrad; }
+            } else { 
+                alert("Pas tout à fait. J'ai entendu : " + dit); 
+                document.getElementById('display').innerText = "Rappel : " + currentPhrase;
+            }
         };
     }
 
-    function rejouer() {
-        if(!currentPhrase) return;
-        const lang = document.getElementById('langSelect').value;
-        const code = (lang === "Hebrew") ? "he-IL" : "en-US";
-        const m = new SpeechSynthesisUtterance(currentPhrase);
-        m.lang = code; window.speechSynthesis.speak(m);
-    }
-
-    function voirAide() {
-        const d = document.getElementById('display');
-        d.innerText = currentPhrase;
-        if(document.getElementById('langSelect').value === "Hebrew") d.classList.add('rtl');
+    function clearAll() {
+        localStorage.clear();
+        alert("Mémoire vidée. Recommençons proprement.");
+        location.reload();
     }
 </script>
 </body>
