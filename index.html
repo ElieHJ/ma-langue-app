@@ -3,90 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnostic API Gemini</title>
+    <title>Polyglot Coach 2.0</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; text-align: center; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .config-box { background: #fff3cd; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ffeeba; }
-        input { width: 90%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; }
-        #modelList { text-align: left; background: #333; color: #00ff00; padding: 15px; border-radius: 10px; font-family: monospace; font-size: 12px; overflow-y: auto; max-height: 300px; display: none; }
-        button { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; }
-        .btn-diag { background: #6f42c1; }
-        .btn-save { background: #333; font-size: 12px; padding: 8px; }
+        :root { --primary: #4A90E2; --success: #4caf50; --bg: #f4f7f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
+        .container { width: 100%; max-width: 450px; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: var(--primary); background: #eef5ff; padding: 10px 20px; border-radius: 15px; }
+        .bubble { min-height: 180px; background: #f8f9fa; border: 2px solid var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 20px; margin-bottom: 20px; font-size: 1.3rem; line-height: 1.4; }
+        button { width: 100%; padding: 16px; margin: 6px 0; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
+        .btn-ai { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-mic { background: var(--success); color: white; }
+        .btn-sec { background: #edf2f7; color: #4a5568; }
+        .config-area { margin-top: 20px; padding: 10px; border-top: 1px solid #eee; font-size: 11px; }
+        input { width: 80%; padding: 8px; border-radius: 5px; border: 1px solid #ddd; }
+        .rtl { direction: rtl; font-size: 1.8rem !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="config-box">
-        <strong>Vérification de la Clé</strong><br><br>
-        <input type="text" id="keyInput" placeholder="Colle ta clé API ici">
-        <button class="btn-save" onclick="sauvegarderCle()">SAUVEGARDER LA CLÉ</button>
+    <div class="stats">
+        <span>Score: <span id="score">0</span></span>
+        <span>⭐ Niv. <span id="level">1</span></span>
     </div>
 
-    <h3>Outil de Diagnostic</h3>
-    <p>Clique sur le bouton ci-dessous pour voir quels modèles Google autorise avec ta clé.</p>
-    
-    <button class="btn-diag" onclick="listerLesModeles()">🔍 VOIR MES MODÈLES SUPPORTÉS</button>
+    <select id="langSelect" style="width:100%; padding:10px; border-radius:10px; margin-bottom:15px;">
+        <option value="English">Anglais 🇺🇸</option>
+        <option value="Hebrew">Hébreu 🇮🇱</option>
+        <option value="Spanish">Espagnol 🇪🇸</option>
+    </select>
 
-    <div id="status" style="margin: 15px 0; font-weight: bold;"></div>
-    <div id="modelList"></div>
+    <div class="bubble" id="display">Prêt pour ton défi Gemini 2.0 ?</div>
+
+    <button class="btn-ai" onclick="genererDefi()">✨ GÉNÉRER DÉFI IA</button>
+    <button class="btn-mic" onclick="ecouter()">🎤 RÉPONDRE</button>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <button class="btn-sec" onclick="rejouer()">🔊 ÉCOUTER</button>
+        <button class="btn-sec" onclick="voirAide()">👁 AIDE</button>
+    </div>
+
+    <div class="config-area">
+        <input type="password" id="keyIn" placeholder="Ta clé API ici">
+        <button style="width:auto; padding:5px 10px;" onclick="saveKey()">OK</button>
+    </div>
 </div>
 
 <script>
     let API_KEY = localStorage.getItem('gemini_api_key');
+    let score = parseInt(localStorage.getItem('polyglotScore')) || 0;
+    let currentPhrase = "";
+    let currentTrad = "";
 
-    function sauvegarderCle() {
-        const val = document.getElementById('keyInput').value.trim();
-        if(val) {
-            localStorage.setItem('gemini_api_key', val);
-            alert("Clé sauvegardée !");
-            location.reload();
-        }
+    document.getElementById('score').innerText = score;
+    document.getElementById('level').innerText = Math.floor(score/100) + 1;
+
+    function saveKey() {
+        const k = document.getElementById('keyIn').value.trim();
+        if(k) { localStorage.setItem('gemini_api_key', k); location.reload(); }
     }
 
-    async function listerLesModeles() {
-        const status = document.getElementById('status');
-        const listDiv = document.getElementById('modelList');
-        
-        if(!API_KEY) {
-            status.innerText = "❌ Aucune clé trouvée. Configure-la en haut.";
-            return;
-        }
+    async function genererDefi() {
+        if(!API_KEY) return alert("Configure ta clé en bas !");
+        const lang = document.getElementById('langSelect').value;
+        const display = document.getElementById('display');
+        display.innerText = "L'IA 2.0 réfléchit...";
 
-        status.innerText = "Interrogation de Google en cours...";
-        listDiv.style.display = "none";
+        // Utilisation du modèle 2.0 Flash Lite que tu as vu dans ta liste
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-001:generateContent?key=${API_KEY}`;
 
         try {
-            // C'est l'URL officielle pour lister les modèles supportés par une clé
-            const url = `https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`;
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    contents: [{parts: [{text: `Génère une phrase courte en ${lang}. Réponds en JSON : {"p": "phrase en ${lang}", "t": "traduction en français"}`}]}]
+                })
+            });
+            const data = await resp.json();
+            const text = data.candidates[0].content.parts[0].text;
+            const json = JSON.parse(text.match(/\{.*\}/s)[0]);
             
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (!response.ok) {
-                status.innerText = "❌ Erreur " + response.status;
-                listDiv.style.display = "block";
-                listDiv.innerText = JSON.stringify(data, null, 2);
-                return;
-            }
-
-            status.innerText = "✅ Succès ! Voici tes modèles :";
-            listDiv.style.display = "block";
-            
-            // On extrait juste les noms des modèles pour que ce soit lisible
-            const modelNames = data.models.map(m => m.name.replace('models/', ''));
-            listDiv.innerHTML = "<strong>Modèles disponibles :</strong><br><br>" + modelNames.join("<br>");
-            
-            console.log("Liste complète :", data);
-
-        } catch (e) {
-            status.innerText = "❌ Erreur de connexion au serveur.";
-            listDiv.style.display = "block";
-            listDiv.innerText = e.message;
+            currentPhrase = json.p;
+            currentTrad = json.t;
+            display.innerText = "Traduisez : " + currentTrad;
+            display.classList.remove('rtl');
+        } catch(e) {
+            display.innerText = "Erreur de connexion. Vérifie ta clé.";
         }
     }
-</script>
 
+    function ecouter() {
+        if(!currentPhrase) return;
+        const lang = document.getElementById('langSelect').value;
+        const code = (lang === "Hebrew") ? "he-IL" : (lang === "Spanish" ? "es-ES" : "en-US");
+        const rec = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
+        rec.lang = code;
+        rec.start();
+        document.getElementById('display').innerText = "Je t'écoute...";
+        rec.onresult = (e) => {
+            const dit = e.results[0][0].transcript.toLowerCase();
+            if(dit.includes(currentPhrase.toLowerCase().replace(/[?.]/g, ""))) {
+                score += 20;
+                localStorage.setItem('polyglotScore', score);
+                document.getElementById('score').innerText = score;
+                alert("⭐ BRAVO !");
+                genererDefi();
+            } else { alert("Entendu : " + dit); document.getElementById('display').innerText = "Traduisez : " + currentTrad; }
+        };
+    }
+
+    function rejouer() {
+        if(!currentPhrase) return;
+        const lang = document.getElementById('langSelect').value;
+        const code = (lang === "Hebrew") ? "he-IL" : "en-US";
+        const m = new SpeechSynthesisUtterance(currentPhrase);
+        m.lang = code; window.speechSynthesis.speak(m);
+    }
+
+    function voirAide() {
+        const d = document.getElementById('display');
+        d.innerText = currentPhrase;
+        if(document.getElementById('langSelect').value === "Hebrew") d.classList.add('rtl');
+    }
+</script>
 </body>
 </html>
