@@ -3,77 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot Chat App</title>
+    <title>Polyglot Coach v2</title>
     <style>
-        :root { --primary: #4A90E2; --success: #4caf50; --accent: #ff9800; --bg: #f4f7f9; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
-        .container { width: 100%; max-width: 500px; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
+        :root { --primary: #4A90E2; --success: #4caf50; --accent: #ff9800; --bg: #f4f7f9; --text: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; color: var(--text); }
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center; }
         
-        h1 { color: #333; font-size: 1.3rem; margin-bottom: 15px; }
+        .header { margin-bottom: 20px; }
+        .scenario-box { background: #e8f0fe; padding: 10px; border-radius: 12px; font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-bottom: 15px; min-height: 20px; }
         
-        select, input { width: 100%; padding: 14px; margin: 5px 0; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
-        select:focus, input:focus { border-color: var(--primary); }
+        select, input { width: 100%; padding: 14px; margin: 5px 0; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; font-size: 16px; outline: none; }
         
-        /* Design Bulle de Discussion */
+        /* Bulle de Discussion */
         .card { 
             min-height: 180px; 
             background: #fff; 
-            color: #333; 
-            border: 2px solid var(--primary);
-            border-radius: 25px 25px 5px 25px; 
+            border: 3px solid var(--primary);
+            border-radius: 30px 30px 5px 30px; 
             display: flex; 
-            flex-direction: column; 
             align-items: center; 
             justify-content: center; 
             margin: 20px 0; 
             cursor: pointer; 
-            padding: 20px;
-            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.1);
+            padding: 25px;
+            transition: 0.3s;
         }
         
-        #wordDisplay { font-size: 1.3rem; font-weight: 500; line-height: 1.5; }
-        #wordDisplay.rtl { font-size: 1.8rem; direction: rtl; font-family: 'Arial', sans-serif; }
+        #wordDisplay { font-size: 1.4rem; font-weight: 500; line-height: 1.4; }
+        #wordDisplay.rtl { font-size: 1.9rem; direction: rtl; }
 
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        button:active { transform: scale(0.96); }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        button { padding: 15px; border: none; border-radius: 15px; cursor: pointer; font-weight: 700; font-size: 15px; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
         
-        .btn-add { background: #333; color: white; width: 100%; margin-bottom: 10px; }
+        .btn-add { background: #2c3e50; color: white; width: 100%; margin-top: 10px; }
         .btn-speak { background: var(--accent); color: white; }
         .btn-mic { background: var(--success); color: white; }
-        .btn-next { background: var(--primary); color: white; grid-column: span 2; margin-top: 10px; }
-        .btn-seed { background: #eee; color: #666; font-size: 11px; margin-top: 20px; width: 100%; }
+        .btn-next { background: var(--primary); color: white; grid-column: span 2; margin-top: 10px; font-size: 18px; }
         
-        #status { font-size: 0.85rem; color: #888; margin-top: 15px; }
+        #status { font-size: 0.8rem; color: #95a5a6; margin-top: 15px; }
+        .small-btn { background: none; color: #bdc3c7; font-size: 10px; margin-top: 20px; border: 1px solid #eee; padding: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🌍 Discussion Polyglotte</h1>
+    <div class="header">
+        <h1>🗣 Coach de Discussion</h1>
+        <div class="scenario-box" id="scenarioDisplay">Prêt à pratiquer ?</div>
+    </div>
     
-    <select id="langSelect">
+    <select id="langSelect" onchange="loadFromCloud()">
         <option value="en-US">Anglais 🇺🇸</option>
         <option value="he-IL">Hébreu 🇮🇱</option>
         <option value="es-ES">Espagnol 🇪🇸</option>
     </select>
 
-    <input type="text" id="wordInput" placeholder="Tapez une phrase ou un mot...">
-    <button class="btn-add" onclick="searchAndAdd()">➕ Ajouter à la discussion</button>
-
     <div class="card" onclick="toggleCard()">
-        <div id="wordDisplay">Bienvenue ! Appuyez sur le bouton gris en bas pour commencer.</div>
+        <div id="wordDisplay">Clique sur "Défi Suivant" pour commencer !</div>
     </div>
 
     <div class="btn-group">
         <button class="btn-speak" onclick="prononcer()">🔊 Écouter</button>
-        <button class="btn-mic" onclick="testerVoix()">🎤 Parler</button>
-        <button class="btn-next" onclick="nextRandom()">Phrase suivante 🎲</button>
+        <button class="btn-mic" onclick="testerVoix()">🎤 Répondre</button>
+        <button class="btn-next" onclick="nextRandom()">Défi Suivant ➔</button>
     </div>
 
-    <p id="status">En attente...</p>
+    <input type="text" id="wordInput" placeholder="Ajouter une phrase perso...">
+    <button class="btn-add" onclick="searchAndAdd()">➕ Ajouter au Cloud</button>
 
-    <button class="btn-seed" onclick="seedDatabase()">🛠 Initialiser avec des phrases de discussion</button>
+    <p id="status">Chargement du cloud...</p>
+    <button class="small-btn" onclick="seedDatabase()">Réinitialiser les phrases types</button>
 </div>
 
 <script type="module">
@@ -95,7 +95,6 @@
   window.myWords = { "en-US": [], "he-IL": [], "es-ES": [] };
   window.currentWord = null;
 
-  // CHARGER DEPUIS LE CLOUD
   window.loadFromCloud = async function() {
     try {
         const q = query(collection(db, "dictionnaire"), orderBy("createdAt", "desc"));
@@ -105,47 +104,38 @@
             const data = doc.data();
             window.myWords[data.lang].push(data);
         });
-        document.getElementById('status').innerText = "Synchro Cloud OK ✅";
+        document.getElementById('status').innerText = "Cloud synchronisé ✅";
     } catch(e) { console.error(e); }
   };
 
-  // AJOUTER UNE PHRASE
   window.searchAndAdd = async function() {
-    const queryWord = document.getElementById('wordInput').value;
+    const val = document.getElementById('wordInput').value;
     const lang = document.getElementById('langSelect').value;
-    if(!queryWord) return;
-
-    document.getElementById('status').innerText = "Traduction en cours...";
+    if(!val) return;
     try {
-        const res = await fetch(`https://api.mymemory.translated.net/get?q=${queryWord}&langpair=${lang.split('-')[0]}|fr`);
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${val}&langpair=${lang.split('-')[0]}|fr`);
         const data = await res.json();
-        const translation = data.responseData.translatedText;
-
         await addDoc(collection(db, "dictionnaire"), {
-            source: queryWord,
-            target: translation,
+            source: val,
+            target: data.responseData.translatedText,
             lang: lang,
+            scenario: "Phrase personnelle",
             createdAt: new Date()
         });
         document.getElementById('wordInput').value = "";
         loadFromCloud();
-    } catch (e) { alert("Erreur de synchro"); }
+    } catch (e) { console.error(e); }
   };
 
-  // INITIALISER LA BASE (SEED)
   window.seedDatabase = async function() {
-    document.getElementById('status').innerText = "Création du contenu...";
-    const starterPhrases = [
-        { lang: "en-US", source: "How are you doing today?", target: "Comment vas-tu aujourd'hui ?" },
-        { lang: "en-US", source: "Could you help me find my way?", target: "Pourriez-vous m'aider à trouver mon chemin ?" },
-        { lang: "he-IL", source: "מה נשמע?", target: "Quoi de neuf ?", translit: "Ma nishma ?" },
-        { lang: "he-IL", source: "אני רוצה להזמין אוכל", target: "Je veux commander à manger", translit: "Ani rotse lehazmin okhel" },
-        { lang: "es-ES", source: "¿Dónde se trouve el restaurante más cercano?", target: "Où se trouve le restaurant le plus proche ?" }
+    const data = [
+        { lang: "en-US", source: "I would like to book a table for two.", target: "Je voudrais réserver une table pour deux.", scenario: "AU RESTAURANT" },
+        { lang: "en-US", source: "Could you tell me where the nearest station is?", target: "Pourriez-vous me dire où se trouve la station la plus proche ?", scenario: "DANS LA RUE" },
+        { lang: "he-IL", source: "כמה זה עולה?", target: "Combien ça coûte ?", scenario: "AU MARCHÉ" },
+        { lang: "he-IL", source: "אפשר לקבל חשבון בבקשה?", target: "Puis-je avoir l'addition s'il vous plaît ?", scenario: "AU RESTAURANT" },
+        { lang: "es-ES", source: "Hola, ¿cómo te llamas?", target: "Bonjour, comment t'appelles-tu ?", scenario: "RENCONTRE" }
     ];
-    for (const p of starterPhrases) {
-        await addDoc(collection(db, "dictionnaire"), { ...p, createdAt: new Date() });
-    }
-    alert("Phrases ajoutées !");
+    for (const p of data) { await addDoc(collection(db, "dictionnaire"), { ...p, createdAt: new Date() }); }
     loadFromCloud();
   };
 
@@ -158,10 +148,10 @@
     function nextRandom() {
         const lang = document.getElementById('langSelect').value;
         const list = window.myWords[lang];
-        if(!list || list.length === 0) return alert("Base vide pour cette langue.");
+        if(!list || list.length === 0) return alert("Ajoute des phrases pour cette langue !");
         
         window.currentWord = list[Math.floor(Math.random() * list.length)];
-        isFlipped = false;
+        isFlipped = true; // On commence par montrer la traduction (le défi)
         updateUI();
     }
 
@@ -173,9 +163,11 @@
 
     function updateUI() {
         const display = document.getElementById('wordDisplay');
-        display.innerText = isFlipped ? window.currentWord.target : window.currentWord.source;
+        const scn = document.getElementById('scenarioDisplay');
         
-        // Gestion RTL pour l'hébreu uniquement si on montre la source
+        display.innerText = isFlipped ? window.currentWord.target : window.currentWord.source;
+        scn.innerText = window.currentWord.scenario || "PRATIQUE LIBRE";
+        
         if(!isFlipped && window.currentWord.lang === 'he-IL') display.classList.add('rtl');
         else display.classList.remove('rtl');
     }
@@ -189,15 +181,14 @@
 
     function testerVoix() {
         if(!window.currentWord) return;
-        const rec = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
+        const rec = new (window.webkitSpeechRecognition || window.Recognition)();
         rec.lang = window.currentWord.lang;
         rec.start();
-        document.getElementById('status').innerText = "Écoute en cours...";
         rec.onresult = (e) => {
             const dit = e.results[0][0].transcript.toLowerCase();
             const cible = window.currentWord.source.toLowerCase();
-            alert(dit.includes(cible) ? "✅ Bravo !" : "❌ J'ai entendu : " + dit);
-            document.getElementById('status').innerText = "Synchro Cloud OK ✅";
+            if(dit.includes(cible.replace(/[?.!,]/g, ""))) alert("✅ Bravo !");
+            else alert("❌ J'ai entendu : " + dit);
         };
     }
 </script>
