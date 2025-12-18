@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot Coach - Final Fix</title>
+    <title>Polyglot Coach - Correctif Final</title>
     <style>
         body { font-family: sans-serif; background: #f4f7f9; padding: 20px; text-align: center; color: #333; }
         .container { max-width: 400px; margin: auto; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .config { background: #fff3cd; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #ffeeba; font-size: 13px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ccc; box-sizing: border-box; }
-        .bubble { min-height: 120px; background: #f8f9fa; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 20px; margin: 20px 0; border: 2px solid #4A90E2; font-size: 1.2rem; }
+        .bubble { min-height: 120px; background: #f8f9fa; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 20px; margin: 20px 0; border: 2px solid #4A90E2; font-size: 1.2rem; line-height: 1.4; }
         button { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
         .btn-ai { background: #4A90E2; color: white; }
         .btn-save { background: #333; color: white; }
@@ -20,14 +20,14 @@
 
 <div class="container">
     <div class="config">
-        <strong>ÉTAPE 1 : Configuration</strong>
-        <input type="text" id="keyInput" placeholder="Colle ta NOUVELLE clé ici">
-        <button class="btn-save" onclick="sauvegarder()">VALIDER LA CLÉ</button>
-        <span id="keyStatus">❌ Aucune clé</span>
+        <strong>Configuration Clé API</strong>
+        <input type="text" id="keyInput" placeholder="Colle ta clé API ici">
+        <button class="btn-save" onclick="sauvegarder()">VALIDER ET CHARGER</button>
+        <div id="keyStatus">❌ Aucune clé enregistrée</div>
     </div>
 
     <div class="bubble" id="display">
-        Une fois la clé validée, clique sur le bouton bleu.
+        Prêt pour le prochain défi ?
     </div>
 
     <button class="btn-ai" onclick="appelerIA()">✨ GÉNÉRER UN DÉFI IA</button>
@@ -36,20 +36,18 @@
 </div>
 
 <script>
-    // Récupération et nettoyage immédiat
+    // Chargement de la clé
     let API_KEY = localStorage.getItem('gemini_api_key');
     if(API_KEY) {
-        document.getElementById('keyStatus').innerText = "✅ Clé enregistrée";
+        document.getElementById('keyStatus').innerText = "✅ Clé chargée";
         document.getElementById('keyStatus').style.color = "green";
     }
 
     function sauvegarder() {
-        const brute = document.getElementById('keyInput').value;
-        // Nettoyage : on enlève les espaces et les retours à la ligne
-        const propre = brute.trim().replace(/[\n\r]/g, "");
-        if(propre) {
-            localStorage.setItem('gemini_api_key', propre);
-            alert("Clé sauvegardée ! On redémarre.");
+        const val = document.getElementById('keyInput').value.trim();
+        if(val) {
+            localStorage.setItem('gemini_api_key', val);
+            alert("Clé enregistrée !");
             location.reload();
         }
     }
@@ -65,35 +63,38 @@
             return;
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        // MISE À JOUR : Utilisation de la version v1 stable et du modèle flash
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
         
-        const forceJsonPrompt = "Donne moi une phrase courte en Anglais et sa traduction en Français. Réponds uniquement en JSON comme ceci : {\"phrase\": \"...\", \"traduction\": \"...\"}";
+        const prompt = "Donne moi une phrase courte en Anglais et sa traduction en Français. Réponds uniquement en JSON comme ceci : {\"phrase\": \"...\", \"traduction\": \"...\"}";
 
         try {
             const resp = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: forceJsonPrompt }] }]
+                    contents: [{ parts: [{ text: prompt }] }]
                 })
             });
 
             const data = await resp.json();
 
             if (!resp.ok) {
-                display.innerText = "❌ Erreur " + resp.status;
+                display.innerText = "❌ Erreur de connexion";
                 debug.style.display = "block";
-                debug.innerText = "Message de Google : " + (data.error ? data.error.message : "Inconnu");
-            } else {
-                const rawText = data.candidates[0].content.parts[0].text;
-                // Nettoyage du JSON car l'IA met parfois des balises ```
-                const jsonStr = rawText.match(/\{.*\}/s)[0];
-                const finalData = JSON.parse(jsonStr);
-                
-                display.innerHTML = `<strong>DÉFI :</strong><br>${finalData.traduction}<br><br><small>(Réponse attendue : ${finalData.phrase})</small>`;
+                debug.innerText = "Google dit : " + (data.error ? data.error.message : "Erreur inconnue");
+                return;
             }
+
+            const rawText = data.candidates[0].content.parts[0].text;
+            // Extraction du JSON au cas où l'IA ajoute du texte autour
+            const jsonStr = rawText.match(/\{.*\}/s)[0];
+            const finalData = JSON.parse(jsonStr);
+            
+            display.innerHTML = `<strong>DÉFI :</strong><br>${finalData.traduction}<br><br><small style="color:#666">(Réponse attendue : ${finalData.phrase})</small>`;
+            
         } catch (e) {
-            display.innerText = "❌ Erreur réseau";
+            display.innerText = "❌ Erreur technique";
             debug.style.display = "block";
             debug.innerText = e.message;
         }
