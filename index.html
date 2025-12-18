@@ -3,78 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot Coach - Diagnostic</title>
+    <title>Polyglot Coach - Final Fix</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; text-align: center; }
-        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .config-top { background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ffeeba; }
-        input#keyInput { width: 90%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        .bubble { min-height: 120px; background: #e9ecef; border-radius: 15px; display: flex; align-items: center; justify-content: center; padding: 20px; margin-bottom: 20px; font-size: 1.1rem; }
-        button { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        body { font-family: sans-serif; background: #f4f7f9; padding: 20px; text-align: center; color: #333; }
+        .container { max-width: 400px; margin: auto; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .config { background: #fff3cd; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #ffeeba; font-size: 13px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ccc; box-sizing: border-box; }
+        .bubble { min-height: 120px; background: #f8f9fa; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 20px; margin: 20px 0; border: 2px solid #4A90E2; font-size: 1.2rem; }
+        button { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
         .btn-ai { background: #4A90E2; color: white; }
-        #errorLog { color: red; font-size: 10px; margin-top: 10px; text-align: left; background: #fee; padding: 5px; display: none; }
+        .btn-save { background: #333; color: white; }
+        #debug { font-size: 10px; color: red; margin-top: 15px; word-break: break-all; display: none; background: #fff0f0; padding: 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="config-top">
-        <strong>Configuration Clé :</strong><br>
-        <input type="text" id="keyInput" placeholder="Colle ta nouvelle clé ici">
-        <button style="background:#333; color:white; padding:5px;" onclick="sauvegarderCle()">VALIDER LA CLÉ</button>
+    <div class="config">
+        <strong>ÉTAPE 1 : Configuration</strong>
+        <input type="text" id="keyInput" placeholder="Colle ta NOUVELLE clé ici">
+        <button class="btn-save" onclick="sauvegarder()">VALIDER LA CLÉ</button>
+        <span id="keyStatus">❌ Aucune clé</span>
     </div>
 
-    <div class="bubble" id="display">Prêt pour le test.</div>
+    <div class="bubble" id="display">
+        Une fois la clé validée, clique sur le bouton bleu.
+    </div>
 
-    <button class="btn-ai" onclick="demanderAI()">✨ TESTER L'IA</button>
+    <button class="btn-ai" onclick="appelerIA()">✨ GÉNÉRER UN DÉFI IA</button>
     
-    <div id="errorLog"></div>
+    <div id="debug"></div>
 </div>
 
 <script>
+    // Récupération et nettoyage immédiat
     let API_KEY = localStorage.getItem('gemini_api_key');
+    if(API_KEY) {
+        document.getElementById('keyStatus').innerText = "✅ Clé enregistrée";
+        document.getElementById('keyStatus').style.color = "green";
+    }
 
-    function sauvegarderCle() {
-        const val = document.getElementById('keyInput').value.trim();
-        if(val) {
-            localStorage.setItem('gemini_api_key', val);
-            alert("Clé enregistrée !");
+    function sauvegarder() {
+        const brute = document.getElementById('keyInput').value;
+        // Nettoyage : on enlève les espaces et les retours à la ligne
+        const propre = brute.trim().replace(/[\n\r]/g, "");
+        if(propre) {
+            localStorage.setItem('gemini_api_key', propre);
+            alert("Clé sauvegardée ! On redémarre.");
             location.reload();
         }
     }
 
-    async function demanderAI() {
-        const log = document.getElementById('errorLog');
-        const disp = document.getElementById('display');
-        log.style.display = "none";
-        disp.innerText = "Appel en cours...";
+    async function appelerIA() {
+        const display = document.getElementById('display');
+        const debug = document.getElementById('debug');
+        debug.style.display = "none";
+        display.innerText = "L'IA réfléchit...";
 
-        if(!API_KEY) { disp.innerText = "Erreur : Pas de clé !"; return; }
+        if(!API_KEY) {
+            display.innerText = "Erreur : Configure ta clé en haut !";
+            return;
+        }
 
-        const body = {
-            contents: [{ parts: [{ text: "Dis 'Bonjour' en anglais." }] }]
-        };
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        
+        const forceJsonPrompt = "Donne moi une phrase courte en Anglais et sa traduction en Français. Réponds uniquement en JSON comme ceci : {\"phrase\": \"...\", \"traduction\": \"...\"}";
 
         try {
-            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+            const resp = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: forceJsonPrompt }] }]
+                })
             });
 
             const data = await resp.json();
 
             if (!resp.ok) {
-                log.style.display = "block";
-                log.innerText = "Détail : " + JSON.stringify(data.error);
-                disp.innerText = "❌ Erreur " + resp.status;
+                display.innerText = "❌ Erreur " + resp.status;
+                debug.style.display = "block";
+                debug.innerText = "Message de Google : " + (data.error ? data.error.message : "Inconnu");
             } else {
-                disp.innerText = "✅ Succès ! IA : " + data.candidates[0].content.parts[0].text;
+                const rawText = data.candidates[0].content.parts[0].text;
+                // Nettoyage du JSON car l'IA met parfois des balises ```
+                const jsonStr = rawText.match(/\{.*\}/s)[0];
+                const finalData = JSON.parse(jsonStr);
+                
+                display.innerHTML = `<strong>DÉFI :</strong><br>${finalData.traduction}<br><br><small>(Réponse attendue : ${finalData.phrase})</small>`;
             }
-        } catch(e) {
-            disp.innerText = "❌ Problème réseau.";
-            log.style.display = "block";
-            log.innerText = e.message;
+        } catch (e) {
+            display.innerText = "❌ Erreur réseau";
+            debug.style.display = "block";
+            debug.innerText = e.message;
         }
     }
 </script>
