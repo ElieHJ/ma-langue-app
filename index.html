@@ -3,38 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon App Polyglotte Cloud</title>
+    <title>Polyglot Chat App</title>
     <style>
-        :root { --primary: #4A90E2; --success: #4caf50; --accent: #ff9800; --bg: #f0f2f5; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        :root { --primary: #4A90E2; --success: #4caf50; --accent: #ff9800; --bg: #f4f7f9; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
         
-        h1 { color: #333; margin-bottom: 20px; font-size: 1.5rem; }
+        h1 { color: #333; font-size: 1.3rem; margin-bottom: 15px; }
         
-        select, input { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        select, input { width: 100%; padding: 14px; margin: 5px 0; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
+        select:focus, input:focus { border-color: var(--primary); }
         
-        .card { height: 200px; background: var(--primary); color: white; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 20px 0; cursor: pointer; transition: transform 0.2s, background 0.3s; position: relative; }
-        .card:active { transform: scale(0.98); }
-        .card-label { position: absolute; top: 10px; font-size: 0.8rem; opacity: 0.8; }
+        /* Design Bulle de Discussion */
+        .card { 
+            min-height: 180px; 
+            background: #fff; 
+            color: #333; 
+            border: 2px solid var(--primary);
+            border-radius: 25px 25px 5px 25px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 20px 0; 
+            cursor: pointer; 
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.1);
+        }
         
-        #wordDisplay { font-size: 2rem; font-weight: bold; padding: 10px; }
-        .rtl { direction: rtl; font-family: 'Arial Hebrew', serif; }
+        #wordDisplay { font-size: 1.3rem; font-weight: 500; line-height: 1.5; }
+        #wordDisplay.rtl { font-size: 1.8rem; direction: rtl; font-family: 'Arial', sans-serif; }
 
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        button { padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        button:active { transform: scale(0.96); }
         
-        .btn-add { background: #333; color: white; width: 100%; }
+        .btn-add { background: #333; color: white; width: 100%; margin-bottom: 10px; }
         .btn-speak { background: var(--accent); color: white; }
         .btn-mic { background: var(--success); color: white; }
-        .btn-next { background: var(--primary); color: white; width: 100%; grid-column: span 2; }
+        .btn-next { background: var(--primary); color: white; grid-column: span 2; margin-top: 10px; }
+        .btn-seed { background: #eee; color: #666; font-size: 11px; margin-top: 20px; width: 100%; }
         
-        #status { font-size: 0.9rem; color: #666; margin-top: 10px; min-height: 1.2em; }
+        #status { font-size: 0.85rem; color: #888; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🌍 Mon App de Langues</h1>
+    <h1>🌍 Discussion Polyglotte</h1>
     
     <select id="langSelect">
         <option value="en-US">Anglais 🇺🇸</option>
@@ -42,131 +58,126 @@
         <option value="es-ES">Espagnol 🇪🇸</option>
     </select>
 
-    <input type="text" id="wordInput" placeholder="Entrez un mot à apprendre...">
-    <button class="btn-add" onclick="searchAndAdd()">➕ Ajouter au Cloud</button>
+    <input type="text" id="wordInput" placeholder="Tapez une phrase ou un mot...">
+    <button class="btn-add" onclick="searchAndAdd()">➕ Ajouter à la discussion</button>
 
     <div class="card" onclick="toggleCard()">
-        <span class="card-label" id="cardLabel">Mot à apprendre</span>
-        <div id="wordDisplay">Ajoutez un mot !</div>
+        <div id="wordDisplay">Bienvenue ! Appuyez sur le bouton gris en bas pour commencer.</div>
     </div>
 
     <div class="btn-group">
         <button class="btn-speak" onclick="prononcer()">🔊 Écouter</button>
         <button class="btn-mic" onclick="testerVoix()">🎤 Parler</button>
-        <button class="btn-next" onclick="nextRandom()">Mot suivant au hasard 🎲</button>
+        <button class="btn-next" onclick="nextRandom()">Phrase suivante 🎲</button>
     </div>
 
-    <p id="status">Prêt</p>
+    <p id="status">En attente...</p>
+
+    <button class="btn-seed" onclick="seedDatabase()">🛠 Initialiser avec des phrases de discussion</button>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  // Configuration avec tes clés réelles
   const firebaseConfig = {
     apiKey: "AIzaSyB2v6Biqc9DjryoFJa1q1ezNFFeoo0QJrg",
     authDomain: "mon-app-langue.firebaseapp.com",
     projectId: "mon-app-langue",
     storageBucket: "mon-app-langue.firebasestorage.app",
     messagingSenderId: "664705865852",
-    appId: "1:123456789:web:1b8512b74bdcef753651f9"
+    appId: "1:664705865852:web:1b8512b74bdcef753651f9"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // Variables de session
   window.myWords = { "en-US": [], "he-IL": [], "es-ES": [] };
   window.currentWord = null;
-  window.isFlipped = false;
 
-  // --- FONCTION : AJOUTER ---
-  window.searchAndAdd = async function() {
-    const queryWord = document.getElementById('wordInput').value;
-    const lang = document.getElementById('langSelect').value;
-    const status = document.getElementById('status');
-    
-    if(!queryWord) return;
-    status.innerText = "Recherche de la traduction...";
-
-    try {
-        const res = await fetch(`https://api.mymemory.translated.net/get?q=${queryWord}&langpair=${lang.split('-')[0]}|fr`);
-        const data = await res.json();
-        const translation = data.responseData.translatedText;
-
-        const newWord = {
-            source: queryWord,
-            target: translation,
-            lang: lang,
-            createdAt: new Date()
-        };
-
-        await addDoc(collection(db, "dictionnaire"), newWord);
-        status.innerText = "✅ Mot synchronisé avec le Cloud !";
-        document.getElementById('wordInput').value = "";
-        loadFromCloud();
-    } catch (e) {
-        status.innerText = "❌ Erreur de connexion.";
-        console.error(e);
-    }
-  };
-
-  // --- FONCTION : CHARGER ---
+  // CHARGER DEPUIS LE CLOUD
   window.loadFromCloud = async function() {
     try {
         const q = query(collection(db, "dictionnaire"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
-        
         window.myWords = { "en-US": [], "he-IL": [], "es-ES": [] };
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             window.myWords[data.lang].push(data);
         });
-        document.getElementById('status').innerText = "Base de données à jour ☁️";
-    } catch(e) {
-        console.log("Premier lancement ou erreur :", e);
+        document.getElementById('status').innerText = "Synchro Cloud OK ✅";
+    } catch(e) { console.error(e); }
+  };
+
+  // AJOUTER UNE PHRASE
+  window.searchAndAdd = async function() {
+    const queryWord = document.getElementById('wordInput').value;
+    const lang = document.getElementById('langSelect').value;
+    if(!queryWord) return;
+
+    document.getElementById('status').innerText = "Traduction en cours...";
+    try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${queryWord}&langpair=${lang.split('-')[0]}|fr`);
+        const data = await res.json();
+        const translation = data.responseData.translatedText;
+
+        await addDoc(collection(db, "dictionnaire"), {
+            source: queryWord,
+            target: translation,
+            lang: lang,
+            createdAt: new Date()
+        });
+        document.getElementById('wordInput').value = "";
+        loadFromCloud();
+    } catch (e) { alert("Erreur de synchro"); }
+  };
+
+  // INITIALISER LA BASE (SEED)
+  window.seedDatabase = async function() {
+    document.getElementById('status').innerText = "Création du contenu...";
+    const starterPhrases = [
+        { lang: "en-US", source: "How are you doing today?", target: "Comment vas-tu aujourd'hui ?" },
+        { lang: "en-US", source: "Could you help me find my way?", target: "Pourriez-vous m'aider à trouver mon chemin ?" },
+        { lang: "he-IL", source: "מה נשמע?", target: "Quoi de neuf ?", translit: "Ma nishma ?" },
+        { lang: "he-IL", source: "אני רוצה להזמין אוכל", target: "Je veux commander à manger", translit: "Ani rotse lehazmin okhel" },
+        { lang: "es-ES", source: "¿Dónde se trouve el restaurante más cercano?", target: "Où se trouve le restaurant le plus proche ?" }
+    ];
+    for (const p of starterPhrases) {
+        await addDoc(collection(db, "dictionnaire"), { ...p, createdAt: new Date() });
     }
+    alert("Phrases ajoutées !");
+    loadFromCloud();
   };
 
   window.loadFromCloud();
 </script>
 
 <script>
-    function showWord() {
-        window.isFlipped = false;
-        const display = document.getElementById('wordDisplay');
-        const label = document.getElementById('cardLabel');
-        
-        display.innerText = window.currentWord.source;
-        label.innerText = "Mot original";
-        
-        if(window.currentWord.lang === 'he-IL') display.classList.add('rtl');
-        else display.classList.remove('rtl');
-    }
-
-    function toggleCard() {
-        if(!window.currentWord) return;
-        window.isFlipped = !window.isFlipped;
-        const display = document.getElementById('wordDisplay');
-        const label = document.getElementById('cardLabel');
-        
-        display.innerText = window.isFlipped ? window.currentWord.target : window.currentWord.source;
-        label.innerText = window.isFlipped ? "Traduction" : "Mot original";
-        
-        if(window.isFlipped) display.classList.remove('rtl');
-        else if(window.currentWord.lang === 'he-IL') display.classList.add('rtl');
-    }
+    let isFlipped = false;
 
     function nextRandom() {
         const lang = document.getElementById('langSelect').value;
         const list = window.myWords[lang];
-        if(!list || list.length === 0) {
-            alert("Aucun mot trouvé pour cette langue dans le Cloud.");
-            return;
-        }
+        if(!list || list.length === 0) return alert("Base vide pour cette langue.");
+        
         window.currentWord = list[Math.floor(Math.random() * list.length)];
-        showWord();
+        isFlipped = false;
+        updateUI();
+    }
+
+    function toggleCard() {
+        if(!window.currentWord) return;
+        isFlipped = !isFlipped;
+        updateUI();
+    }
+
+    function updateUI() {
+        const display = document.getElementById('wordDisplay');
+        display.innerText = isFlipped ? window.currentWord.target : window.currentWord.source;
+        
+        // Gestion RTL pour l'hébreu uniquement si on montre la source
+        if(!isFlipped && window.currentWord.lang === 'he-IL') display.classList.add('rtl');
+        else display.classList.remove('rtl');
     }
 
     function prononcer() {
@@ -178,21 +189,15 @@
 
     function testerVoix() {
         if(!window.currentWord) return;
-        const recognition = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
-        recognition.lang = window.currentWord.lang;
-        recognition.start();
-        
-        document.getElementById('status').innerText = "Je vous écoute...";
-        
-        recognition.onresult = (event) => {
-            const parole = event.results[0][0].transcript.toLowerCase();
+        const rec = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
+        rec.lang = window.currentWord.lang;
+        rec.start();
+        document.getElementById('status').innerText = "Écoute en cours...";
+        rec.onresult = (e) => {
+            const dit = e.results[0][0].transcript.toLowerCase();
             const cible = window.currentWord.source.toLowerCase();
-            if(parole.includes(cible)) {
-                alert("✅ Parfait ! J'ai entendu : " + parole);
-            } else {
-                alert("❌ Pas tout à fait. J'ai entendu : " + parole);
-            }
-            document.getElementById('status').innerText = "Base de données à jour ☁️";
+            alert(dit.includes(cible) ? "✅ Bravo !" : "❌ J'ai entendu : " + dit);
+            document.getElementById('status').innerText = "Synchro Cloud OK ✅";
         };
     }
 </script>
