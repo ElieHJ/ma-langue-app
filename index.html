@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon App Polyglotte Cloud</title>
+    <style>
+        :root { --primary: #4A90E2; --success: #4caf50; --accent: #ff9800; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        
+        h1 { color: #333; margin-bottom: 20px; font-size: 1.5rem; }
+        
+        select, input { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        
+        .card { height: 200px; background: var(--primary); color: white; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 20px 0; cursor: pointer; transition: transform 0.2s, background 0.3s; position: relative; }
+        .card:active { transform: scale(0.98); }
+        .card-label { position: absolute; top: 10px; font-size: 0.8rem; opacity: 0.8; }
+        
+        #wordDisplay { font-size: 2rem; font-weight: bold; padding: 10px; }
+        .rtl { direction: rtl; font-family: 'Arial Hebrew', serif; }
+
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        button { padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        
+        .btn-add { background: #333; color: white; width: 100%; }
+        .btn-speak { background: var(--accent); color: white; }
+        .btn-mic { background: var(--success); color: white; }
+        .btn-next { background: var(--primary); color: white; width: 100%; grid-column: span 2; }
+        
+        #status { font-size: 0.9rem; color: #666; margin-top: 10px; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌍 Mon App de Langues</h1>
+    
+    <select id="langSelect">
+        <option value="en-US">Anglais 🇺🇸</option>
+        <option value="he-IL">Hébreu 🇮🇱</option>
+        <option value="es-ES">Espagnol 🇪🇸</option>
+    </select>
+
+    <input type="text" id="wordInput" placeholder="Entrez un mot à apprendre...">
+    <button class="btn-add" onclick="searchAndAdd()">➕ Ajouter au Cloud</button>
+
+    <div class="card" onclick="toggleCard()">
+        <span class="card-label" id="cardLabel">Mot à apprendre</span>
+        <div id="wordDisplay">Ajoutez un mot !</div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-speak" onclick="prononcer()">🔊 Écouter</button>
+        <button class="btn-mic" onclick="testerVoix()">🎤 Parler</button>
+        <button class="btn-next" onclick="nextRandom()">Mot suivant au hasard 🎲</button>
+    </div>
+
+    <p id="status">Prêt</p>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // Configuration avec tes clés réelles
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2v6Biqc9DjryoFJa1q1ezNFFeoo0QJrg",
+    authDomain: "mon-app-langue.firebaseapp.com",
+    projectId: "mon-app-langue",
+    storageBucket: "mon-app-langue.firebasestorage.app",
+    messagingSenderId: "664705865852",
+    appId: "1:123456789:web:1b8512b74bdcef753651f9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Variables de session
+  window.myWords = { "en-US": [], "he-IL": [], "es-ES": [] };
+  window.currentWord = null;
+  window.isFlipped = false;
+
+  // --- FONCTION : AJOUTER ---
+  window.searchAndAdd = async function() {
+    const queryWord = document.getElementById('wordInput').value;
+    const lang = document.getElementById('langSelect').value;
+    const status = document.getElementById('status');
+    
+    if(!queryWord) return;
+    status.innerText = "Recherche de la traduction...";
+
+    try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${queryWord}&langpair=${lang.split('-')[0]}|fr`);
+        const data = await res.json();
+        const translation = data.responseData.translatedText;
+
+        const newWord = {
+            source: queryWord,
+            target: translation,
+            lang: lang,
+            createdAt: new Date()
+        };
+
+        await addDoc(collection(db, "dictionnaire"), newWord);
+        status.innerText = "✅ Mot synchronisé avec le Cloud !";
+        document.getElementById('wordInput').value = "";
+        loadFromCloud();
+    } catch (e) {
+        status.innerText = "❌ Erreur de connexion.";
+        console.error(e);
+    }
+  };
+
+  // --- FONCTION : CHARGER ---
+  window.loadFromCloud = async function() {
+    try {
+        const q = query(collection(db, "dictionnaire"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        window.myWords = { "en-US": [], "he-IL": [], "es-ES": [] };
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            window.myWords[data.lang].push(data);
+        });
+        document.getElementById('status').innerText = "Base de données à jour ☁️";
+    } catch(e) {
+        console.log("Premier lancement ou erreur :", e);
+    }
+  };
+
+  window.loadFromCloud();
+</script>
+
+<script>
+    function showWord() {
+        window.isFlipped = false;
+        const display = document.getElementById('wordDisplay');
+        const label = document.getElementById('cardLabel');
+        
+        display.innerText = window.currentWord.source;
+        label.innerText = "Mot original";
+        
+        if(window.currentWord.lang === 'he-IL') display.classList.add('rtl');
+        else display.classList.remove('rtl');
+    }
+
+    function toggleCard() {
+        if(!window.currentWord) return;
+        window.isFlipped = !window.isFlipped;
+        const display = document.getElementById('wordDisplay');
+        const label = document.getElementById('cardLabel');
+        
+        display.innerText = window.isFlipped ? window.currentWord.target : window.currentWord.source;
+        label.innerText = window.isFlipped ? "Traduction" : "Mot original";
+        
+        if(window.isFlipped) display.classList.remove('rtl');
+        else if(window.currentWord.lang === 'he-IL') display.classList.add('rtl');
+    }
+
+    function nextRandom() {
+        const lang = document.getElementById('langSelect').value;
+        const list = window.myWords[lang];
+        if(!list || list.length === 0) {
+            alert("Aucun mot trouvé pour cette langue dans le Cloud.");
+            return;
+        }
+        window.currentWord = list[Math.floor(Math.random() * list.length)];
+        showWord();
+    }
+
+    function prononcer() {
+        if(!window.currentWord) return;
+        const msg = new SpeechSynthesisUtterance(window.currentWord.source);
+        msg.lang = window.currentWord.lang;
+        window.speechSynthesis.speak(msg);
+    }
+
+    function testerVoix() {
+        if(!window.currentWord) return;
+        const recognition = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
+        recognition.lang = window.currentWord.lang;
+        recognition.start();
+        
+        document.getElementById('status').innerText = "Je vous écoute...";
+        
+        recognition.onresult = (event) => {
+            const parole = event.results[0][0].transcript.toLowerCase();
+            const cible = window.currentWord.source.toLowerCase();
+            if(parole.includes(cible)) {
+                alert("✅ Parfait ! J'ai entendu : " + parole);
+            } else {
+                alert("❌ Pas tout à fait. J'ai entendu : " + parole);
+            }
+            document.getElementById('status').innerText = "Base de données à jour ☁️";
+        };
+    }
+</script>
+
+</body>
+</html>
