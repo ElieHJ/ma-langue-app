@@ -3,99 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot Coach - Version Directe</title>
+    <title>Polyglot Coach - Diagnostic</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 15px; text-align: center; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        
-        /* ZONE DE CLÉ BIEN VISIBLE EN HAUT */
         .config-top { background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ffeeba; }
         input#keyInput { width: 90%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        
-        .bubble { min-height: 150px; background: #e9ecef; border-radius: 15px; display: flex; align-items: center; justify-content: center; padding: 20px; margin-bottom: 20px; font-size: 1.2rem; }
-        button { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .bubble { min-height: 120px; background: #e9ecef; border-radius: 15px; display: flex; align-items: center; justify-content: center; padding: 20px; margin-bottom: 20px; font-size: 1.1rem; }
+        button { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .btn-ai { background: #4A90E2; color: white; }
-        .btn-mic { background: #28a745; color: white; }
-        .btn-save { background: #333; color: white; padding: 8px; font-size: 12px; }
-        .rtl { direction: rtl; font-size: 1.8rem; }
+        #errorLog { color: red; font-size: 10px; margin-top: 10px; text-align: left; background: #fee; padding: 5px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="config-top">
-        <strong>1. Configure ta clé Gemini ici :</strong><br><br>
-        <input type="text" id="keyInput" placeholder="Colle ta clé AIzaSy...">
-        <button class="btn-save" onclick="sauvegarderCle()">SAUVEGARDER LA CLÉ</button>
-        <small id="keyStatus" style="display:block; margin-top:5px; color:red;">Clé non configurée</small>
+        <strong>Configuration Clé :</strong><br>
+        <input type="text" id="keyInput" placeholder="Colle ta nouvelle clé ici">
+        <button style="background:#333; color:white; padding:5px;" onclick="sauvegarderCle()">VALIDER LA CLÉ</button>
     </div>
 
-    <select id="langSelect" style="width:100%; padding:10px; margin-bottom:10px;">
-        <option value="English">Anglais 🇺🇸</option>
-        <option value="Hebrew">Hébreu 🇮🇱</option>
-    </select>
+    <div class="bubble" id="display">Prêt pour le test.</div>
 
-    <div class="bubble" id="display">
-        Clique sur le bouton bleu après avoir mis ta clé.
-    </div>
-
-    <button class="btn-ai" onclick="demanderAI()">✨ GÉNÉRER DÉFI IA</button>
-    <button class="btn-mic" onclick="testerVoix()">🎤 RÉPONDRE</button>
+    <button class="btn-ai" onclick="demanderAI()">✨ TESTER L'IA</button>
+    
+    <div id="errorLog"></div>
 </div>
 
 <script>
-    // Chargement immédiat
     let API_KEY = localStorage.getItem('gemini_api_key');
-    if(API_KEY) {
-        document.getElementById('keyStatus').innerText = "✅ Clé chargée en mémoire";
-        document.getElementById('keyStatus').style.color = "green";
-        document.getElementById('keyInput').value = API_KEY;
-    }
 
     function sauvegarderCle() {
         const val = document.getElementById('keyInput').value.trim();
         if(val) {
             localStorage.setItem('gemini_api_key', val);
-            alert("Clé enregistrée localement !");
+            alert("Clé enregistrée !");
             location.reload();
         }
     }
 
     async function demanderAI() {
-        if(!API_KEY) return alert("Mets ta clé en haut d'abord !");
-        
-        const lang = document.getElementById('langSelect').value;
-        const prompt = `Génère une phrase courte en ${lang}. Réponds en JSON : {"phrase": "...", "traduction": "..."}`;
-        
+        const log = document.getElementById('errorLog');
+        const disp = document.getElementById('display');
+        log.style.display = "none";
+        disp.innerText = "Appel en cours...";
+
+        if(!API_KEY) { disp.innerText = "Erreur : Pas de clé !"; return; }
+
+        const body = {
+            contents: [{ parts: [{ text: "Dis 'Bonjour' en anglais." }] }]
+        };
+
         try {
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({contents: [{parts: [{text: prompt}]}]})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
             });
+
             const data = await resp.json();
-            const text = data.candidates[0].content.parts[0].text;
-            const json = JSON.parse(text.match(/\{.*\}/s)[0]);
-            
-            window.currentPhrase = json.phrase;
-            document.getElementById('display').innerText = "Traduisez : " + json.traduction;
+
+            if (!resp.ok) {
+                log.style.display = "block";
+                log.innerText = "Détail : " + JSON.stringify(data.error);
+                disp.innerText = "❌ Erreur " + resp.status;
+            } else {
+                disp.innerText = "✅ Succès ! IA : " + data.candidates[0].content.parts[0].text;
+            }
         } catch(e) {
-            alert("Erreur. Vérifie ta clé ou ta connexion.");
+            disp.innerText = "❌ Problème réseau.";
+            log.style.display = "block";
+            log.innerText = e.message;
         }
     }
-
-    function testerVoix() {
-        if(!window.currentPhrase) return;
-        const rec = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
-        rec.lang = document.getElementById('langSelect').value === "Hebrew" ? "he-IL" : "en-US";
-        rec.start();
-        rec.onresult = (e) => {
-            const dit = e.results[0][0].transcript.toLowerCase();
-            if(dit.includes(window.currentPhrase.toLowerCase().replace(/[?.]/g, ""))) alert("Bravo !");
-            else alert("Entendu : " + dit);
-        };
-    }
 </script>
-
 </body>
 </html>
