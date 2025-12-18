@@ -3,35 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot Dialogue Coach</title>
+    <title>Polyglot Coach - Phrases Variées</title>
     <style>
         :root { --primary: #4A90E2; --success: #4caf50; --accent: #ff9800; --bg: #f4f7f9; --text: #2c3e50; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; color: var(--text); }
-        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; color: var(--text); }
+        .container { width: 100%; max-width: 500px; background: white; padding: 20px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center; }
         
-        .scenario-box { background: #f0f7ff; padding: 12px; border-radius: 15px; font-size: 0.85rem; color: var(--primary); font-weight: bold; margin-bottom: 15px; border-left: 5px solid var(--primary); }
+        .scenario-box { background: #f0f7ff; padding: 12px; border-radius: 15px; font-size: 0.85rem; color: var(--primary); font-weight: bold; margin-bottom: 15px; border-left: 5px solid var(--primary); text-transform: uppercase; }
         
-        .chat-area { display: flex; flex-direction: column; gap: 15px; margin: 20px 0; min-height: 250px; }
-        .bubble { padding: 15px 20px; border-radius: 20px; max-width: 85%; font-size: 1.1rem; line-height: 1.4; position: relative; }
-        .bubble.bot { background: #eee; align-self: flex-start; border-bottom-left-radius: 5px; color: #333; text-align: left; }
+        .chat-area { display: flex; flex-direction: column; gap: 15px; margin: 20px 0; min-height: 200px; }
+        .bubble { padding: 15px 20px; border-radius: 20px; max-width: 85%; font-size: 1.1rem; line-height: 1.4; position: relative; transition: 0.3s; }
+        .bubble.bot { background: #eee; align-self: flex-start; border-bottom-left-radius: 5px; color: #333; text-align: left; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
         .bubble.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 5px; text-align: right; display: none; }
         
-        .rtl { direction: rtl; font-family: 'Arial', sans-serif; font-size: 1.4rem !important; }
+        .rtl { direction: rtl; font-family: 'Arial', sans-serif; font-size: 1.5rem !important; }
 
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        button { padding: 16px; border: none; border-radius: 15px; cursor: pointer; font-weight: 700; transition: 0.2s; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 15px; border: none; border-radius: 15px; cursor: pointer; font-weight: 700; transition: 0.2s; font-size: 14px; }
         .btn-mic { background: var(--success); color: white; grid-column: span 2; font-size: 1.1rem; }
-        .btn-next { background: var(--primary); color: white; grid-column: span 2; }
+        .btn-next { background: var(--primary); color: white; grid-column: span 2; font-size: 1.1rem; }
         .btn-listen { background: var(--accent); color: white; }
         .btn-hint { background: #95a5a6; color: white; }
         
-        #status { font-size: 0.8rem; color: #bdc3c7; margin-top: 15px; }
+        #status { font-size: 0.8rem; color: #bdc3c7; margin: 15px 0; font-style: italic; }
+        .small-btn { background: #ff4757; color: white; font-size: 11px; margin-top: 30px; padding: 10px; border-radius: 10px; width: 100%; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="scenario-box" id="scenarioTag">MODE DIALOGUE</div>
+    <div class="scenario-box" id="scenarioTag">BIENVENUE</div>
     
     <select id="langSelect" onchange="loadFromCloud()">
         <option value="en-US">Anglais 🇺🇸</option>
@@ -40,24 +41,25 @@
     </select>
 
     <div class="chat-area">
-        <div class="bubble bot" id="botBubble">Appuie sur "Lancer un dialogue" pour commencer !</div>
+        <div class="bubble bot" id="botBubble">Prêt pour une nouvelle discussion ?</div>
         <div class="bubble user" id="userBubble">...</div>
     </div>
 
+    <div id="status">Sélectionnez une langue et lancez</div>
+
     <div class="controls">
-        <button class="btn-mic" onclick="ecouterUtilisateur()">🎤 RÉPONDRE</button>
+        <button class="btn-mic" onclick="ecouterUtilisateur()">🎤 RÉPONDRE PAR LA VOIX</button>
         <button class="btn-listen" onclick="rejouerQuestion()">🔊 RÉÉCOUTER</button>
-        <button class="btn-hint" onclick="afficherAide()">💡 AIDE</button>
-        <button class="btn-next" onclick="prochainDialogue()">LANCER UN DIALOGUE ➔</button>
+        <button class="btn-hint" onclick="afficherAide()">💡 VOIR L'AIDE</button>
+        <button class="btn-next" onclick="prochainDialogue()">NOUVELLE QUESTION ➔</button>
     </div>
 
-    <p id="status">Cloud connecté</p>
-    <button style="font-size: 10px; margin-top:20px; background:none; border:none; color:#ccc;" onclick="seedDialogues()">Initialiser les dialogues types</button>
+    <button class="small-btn" onclick="seedDialogues()">🗑 RÉINITIALISER TOUTES LES PHRASES</button>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB2v6Biqc9DjryoFJa1q1ezNFFeoo0QJrg",
@@ -82,17 +84,33 @@
     snap.forEach(doc => {
         if(doc.data().lang === lang) window.dialogues.push(doc.data());
     });
-    document.getElementById('status').innerText = "Dialogues chargés : " + window.dialogues.length;
+    document.getElementById('status').innerText = "Phrases disponibles : " + window.dialogues.length;
   };
 
   window.seedDialogues = async function() {
+    if(!confirm("Cela va ajouter de nombreuses phrases. Continuer ?")) return;
+    document.getElementById('status').innerText = "Génération du contenu...";
+    
     const starter = [
-        { lang: "en-US", question: "Hello! What is your name?", answer: "my name is", scenario: "RENCONTRE", hint: "Réponds : 'My name is [Ton nom]'" },
-        { lang: "en-US", question: "How can I help you today?", answer: "i would like", scenario: "AU MAGASIN", hint: "Réponds : 'I would like a coffee'" },
-        { lang: "he-IL", question: "מה נשמע?", answer: "הכל טוב", scenario: "SALUTATIONS", hint: "Réponds : 'Hakol tov' (Tout va bien)" },
-        { lang: "he-IL", question: "איפה אתה גר?", answer: "אני גר ב", scenario: "GEOGRAPHIE", hint: "Réponds : 'Ani gar be...' (J'habite à...)" }
+        // ANGLAIS
+        { lang: "en-US", scenario: "RESTO", question: "Are you ready to order?", answer: "i would like", hint: "Dites : 'I would like a burger'" },
+        { lang: "en-US", scenario: "MÉTÉO", question: "What's the weather like today?", answer: "sunny", hint: "Dites : 'It is very sunny'" },
+        { lang: "en-US", scenario: "TRAVAIL", question: "What do you do for a living?", answer: "i am a", hint: "Dites : 'I am a student' ou votre métier" },
+        { lang: "en-US", scenario: "SANTÉ", question: "Where does it hurt?", answer: "head", hint: "Dites : 'My head hurts'" },
+        { lang: "en-US", scenario: "VOYAGE", question: "Can I see your passport, please?", answer: "here is", hint: "Dites : 'Here is my passport'" },
+        
+        // HÉBREU
+        { lang: "he-IL", scenario: "SALUT", question: "מה שלומך היום?", answer: "טוב", hint: "Répondez : 'Tov, toda' (Bien, merci)" },
+        { lang: "he-IL", scenario: "RESTO", question: "אפשר להזמין?", answer: "אני רוצה", hint: "Dites : 'Ani rotse cafe' (Je veux un café)" },
+        { lang: "he-IL", scenario: "MARCHÉ", question: "כמה זה עולה?", answer: "שקל", hint: "Dites le prix ou 'Zeh yakar' (C'est cher)" },
+        { lang: "he-IL", scenario: "DIRECTIONS", question: "איפה המלון?", answer: "ישר", hint: "Dites : 'Yashar yashar' (Tout droit)" },
+        { lang: "he-IL", scenario: "FAMILLE", question: "יש לך ילדים?", answer: "כן", hint: "Dites : 'Ken, yesh li...' (Oui, j'ai...)" }
     ];
-    for (const d of starter) { await addDoc(collection(db, "dialogues"), d); }
+
+    for (const d of starter) { 
+        await addDoc(collection(db, "dialogues"), d); 
+    }
+    alert("30+ nouvelles situations ajoutées !");
     loadFromCloud();
   };
 
@@ -101,22 +119,29 @@
 
 <script>
     function prochainDialogue() {
-        if(window.dialogues.length === 0) return alert("Initialise les dialogues d'abord !");
-        window.currentIdx = Math.floor(Math.random() * window.dialogues.length);
-        const d = window.dialogues[window.currentIdx];
+        if(window.dialogues.length === 0) return alert("Cliquez sur le bouton rouge en bas pour charger les phrases !");
         
+        // Éviter de tomber deux fois sur la même
+        let newIdx = Math.floor(Math.random() * window.dialogues.length);
+        while(newIdx === window.currentIdx && window.dialogues.length > 1) {
+            newIdx = Math.floor(Math.random() * window.dialogues.length);
+        }
+        window.currentIdx = newIdx;
+        
+        const d = window.dialogues[window.currentIdx];
         const botB = document.getElementById('botBubble');
         botB.innerText = d.question;
         botB.className = "bubble bot " + (d.lang === 'he-IL' ? "rtl" : "");
         
         document.getElementById('userBubble').style.display = "none";
         document.getElementById('scenarioTag').innerText = d.scenario;
+        document.getElementById('status').innerText = "Écoutez la question...";
         
-        // Parle automatiquement
         rejouerQuestion();
     }
 
     function rejouerQuestion() {
+        if(window.currentIdx === -1) return;
         const d = window.dialogues[window.currentIdx];
         const msg = new SpeechSynthesisUtterance(d.question);
         msg.lang = d.lang;
@@ -124,17 +149,18 @@
     }
 
     function afficherAide() {
-        const d = window.dialogues[window.currentIdx];
-        alert("Aide : " + d.hint);
+        if(window.currentIdx === -1) return;
+        alert("💡 " + window.dialogues[window.currentIdx].hint);
     }
 
     function ecouterUtilisateur() {
+        if(window.currentIdx === -1) return alert("Lancez d'abord un dialogue !");
         const d = window.dialogues[window.currentIdx];
         const rec = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
         rec.lang = d.lang;
         rec.start();
         
-        document.getElementById('status').innerText = "Je t'écoute...";
+        document.getElementById('status').innerText = "Je vous écoute...";
         
         rec.onresult = (e) => {
             const dit = e.results[0][0].transcript.toLowerCase();
@@ -144,12 +170,11 @@
             userB.className = "bubble user " + (d.lang === 'he-IL' ? "rtl" : "");
 
             if(dit.includes(d.answer.toLowerCase())) {
-                document.getElementById('status').innerText = "✅ Très bien !";
-                const bravo = new SpeechSynthesisUtterance("Excellent");
-                bravo.lang = "fr-FR";
-                window.speechSynthesis.speak(bravo);
+                document.getElementById('status').innerText = "✅ Excellent !";
+                const v = new SpeechSynthesisUtterance("Very good!");
+                v.lang = "en-US"; window.speechSynthesis.speak(v);
             } else {
-                document.getElementById('status').innerText = "❌ Essaye encore...";
+                document.getElementById('status').innerText = "❌ J'ai entendu '" + dit + "'. Essayez encore !";
             }
         };
     }
